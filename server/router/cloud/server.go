@@ -12,6 +12,6 @@ func (e *ServerRouter) InitServerRouter(Router *gin.RouterGroup) {
 	customerRouter := Router.Group("server").Use(middleware.OperationRecord())
 	serverApi := v1.ApiGroupApp.CloudApiGroup.ServerApi
 	{
-		customerRouter.GET("check", serverApi.Check) // 创建客户
+		customerRouter.POST("check", serverApi.Check) // 创建客户
 	}
 }
