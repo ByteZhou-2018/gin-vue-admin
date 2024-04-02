@@ -1,8 +1,6 @@
 package request
 
 import (
-	"context"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/cloud"
 	"golang.org/x/crypto/ssh"
 	"time"
 )
@@ -14,9 +12,7 @@ type SSHRequest struct {
 	Password string `json:"password"`
 }
 
-func (s *SSHRequest) Connection(ctx context.Context) (*cloud.Context, error) {
-	var cloudCtx cloud.Context
-	ctx, cancel := context.WithCancel(ctx)
+func (s *SSHRequest) Connection() (*ssh.Client, error) {
 	config := &ssh.ClientConfig{
 		User: s.Username,
 		Auth: []ssh.AuthMethod{
@@ -25,12 +21,10 @@ func (s *SSHRequest) Connection(ctx context.Context) (*cloud.Context, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         30 * time.Second,
 	}
-	cloudCtx.CTX = ctx
-	cloudCtx.Cancel = cancel
+
 	client, err := ssh.Dial("tcp", s.Host+":"+s.Port, config)
 	if err != nil {
 		return nil, err
 	}
-	cloudCtx.Client = client
-	return &cloudCtx, nil
+	return client, nil
 }

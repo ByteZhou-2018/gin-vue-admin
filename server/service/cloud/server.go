@@ -2,39 +2,63 @@ package cloud
 
 import (
 	"bufio"
+	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/cloud"
+	"golang.org/x/crypto/ssh"
 )
 
 type ServerService struct{}
 
 // 环境检测
-func (s *ServerService) Cmd(cmd string, msg chan string, connect cloud.Context) error {
-	client := connect.Client
-	defer client.Close()
+func (s *ServerService) Cmd(cmd string, msg chan cloud.MsgInfo, client *ssh.Client) {
 
 	session, err := client.NewSession()
 	if err != nil {
-		return err
+		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
+		return
 	}
 	defer session.Close()
 	stdout, err := session.StdoutPipe()
 	if err != nil {
-		return err
+		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
+		return
 	}
-	reader := bufio.NewReader(stdout)
+
+	stderr, err := session.StderrPipe()
+	if err != nil {
+		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
+		return
+	}
+
+	// 创建Scanner来逐行读取流
+	stdoutScanner := bufio.NewScanner(stdout)
+	stderrScanner := bufio.NewScanner(stderr)
+
+	// 启动协程读取stdout
+	go func() {
+		for stdoutScanner.Scan() {
+			msg <- cloud.MsgInfo{Msg: stdoutScanner.Text(), Status: constant.MESSAGE}
+		}
+	}()
+
+	// 启动协程读取stderr
+	go func() {
+		for stderrScanner.Scan() {
+			msg <- cloud.MsgInfo{Msg: stderrScanner.Text(), Status: constant.FAIL}
+		}
+	}()
 
 	err = session.Start(cmd)
 
 	if err != nil {
-		return err
+		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
 	}
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			connect.Cancel()
-			break
-		}
-		msg <- line
+
+	err = session.Wait()
+	if err != nil {
+		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
 	}
-	return nil
+
+	msg <- cloud.MsgInfo{Msg: "complete", Status: constant.COMPLETE}
+
 }
