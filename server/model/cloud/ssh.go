@@ -12,3 +12,7 @@ type MsgInfo struct {
 type SSH interface {
 	Connection() (*ssh.Client, error)
 }
+
+type CmdNode struct {
+	Cmd string
+}

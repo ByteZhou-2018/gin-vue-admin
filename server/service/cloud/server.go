@@ -10,7 +10,7 @@ import (
 type ServerService struct{}
 
 // 环境检测
-func (s *ServerService) Cmd(cmd string, msg chan cloud.MsgInfo, client *ssh.Client) {
+func (s *ServerService) Cmd(cmd cloud.CmdNode, msg chan cloud.MsgInfo, client *ssh.Client) {
 
 	session, err := client.NewSession()
 	if err != nil {
@@ -48,17 +48,17 @@ func (s *ServerService) Cmd(cmd string, msg chan cloud.MsgInfo, client *ssh.Clie
 		}
 	}()
 
-	err = session.Start(cmd)
+	err = session.Start(cmd.Cmd)
 
 	if err != nil {
 		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
 	}
+
+	msg <- cloud.MsgInfo{Msg: "run:" + cmd.Cmd, Status: constant.MESSAGE}
 
 	err = session.Wait()
 	if err != nil {
 		msg <- cloud.MsgInfo{Msg: err.Error(), Status: constant.FAIL}
 	}
-
-	msg <- cloud.MsgInfo{Msg: "complete", Status: constant.COMPLETE}
 
 }

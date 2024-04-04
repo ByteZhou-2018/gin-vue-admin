@@ -28,6 +28,7 @@
 
     <el-dialog
     v-model="dialogVisible"
+    :before-close="Close"
     >
       <div class="min-h-96 bg-gray-900">
         <div v-for="(cmd,key) in cmds" :key="key" :class="{
@@ -80,6 +81,7 @@ const install =  async () =>{
             event: 'complete',
             data: ev.data
           });
+          ElMessage.success('环境安装成功')
           break;
         case 'fail':
           cmds.value.push({
@@ -93,15 +95,17 @@ const install =  async () =>{
             data: ev.data
           });
       }
+    },
+    onclose(){
+      console.log("close")
+    },
+    onerror(err){
+      console.log(err)
     }
   })
   ctrl.value = c;
 
   dialogVisible.value = true;
-  cmds.value.push({
-    event: 'info',
-    data: '开始检测'
-  });
 
   await sse();
 
@@ -124,6 +128,8 @@ const check = async () =>{
             event: 'complete',
             data: ev.data
           });
+          Close()
+            ElMessage.success('检测成功')
           break;
         case 'fail':
           cmds.value.push({
@@ -137,21 +143,31 @@ const check = async () =>{
             data: ev.data
           });
       }
+    },
+    onclose(){
+      console.log("close")
+    },
+    onerror(err){
+      console.log(err)
     }
   })
   ctrl.value = c;
 
   dialogVisible.value = true;
-  cmds.value.push({
-    event: 'info',
-    data: '开始检测'
-  });
 
   await sse();
 
 }
-
 const stop = () =>{
   ctrl.value.abort();
 }
+const Close = () =>{
+  dialogVisible.value = false;
+  cmds.value = [];
+  stop()
+}
+
+
+
+
 </script>

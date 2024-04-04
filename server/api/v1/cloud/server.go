@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"context"
 	"github.com/flipped-aurora/gin-vue-admin/server/constant"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/cloud"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/cloud/request"
@@ -13,16 +14,49 @@ type ServerApi struct{}
 
 // 环境检测
 func (s *ServerApi) Check(c *gin.Context) {
-	Run("docker version && docker-compose version", c)
+
+	// 创建一个带有超时的上下文
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1*time.Hour) // 设置为1小时
+	defer cancel()
+
+	// 将新的上下文传递给需要长时间运行的操作
+	c.Request = c.Request.WithContext(ctx)
+
+	checkDocker := cloud.CmdNode{
+		Cmd: "docker version",
+	}
+
+	checkDockerCompose := cloud.CmdNode{
+		Cmd: "docker-compose version",
+	}
+
+	Run([]cloud.CmdNode{checkDocker, checkDockerCompose}, c)
+
 }
 
 // 安装环境
 func (s *ServerApi) Install(c *gin.Context) {
-	docker := "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
 
-	dockerCompose := "sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose && docker-compose version"
+	// 创建一个带有超时的上下文
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 1*time.Hour) // 设置为1小时
+	defer cancel()
 
-	Run(docker+" ; "+dockerCompose, c)
+	// 将新的上下文传递给需要长时间运行的操作
+	c.Request = c.Request.WithContext(ctx)
+
+	//docker := cloud.CmdNode{
+	//	Cmd:      "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh",
+	//}
+
+	//dockerCompose := cloud.CmdNode{
+	//	Cmd: "sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose && docker-compose version",
+	//}
+
+	pingTest := cloud.CmdNode{
+		Cmd: "ping www.baidu.com",
+	}
+
+	Run([]cloud.CmdNode{pingTest}, c)
 
 }
 
@@ -31,12 +65,12 @@ func (s *ServerApi) Deploy() {
 
 }
 
-func Run(cmd string, c *gin.Context) {
+func Run(cmds []cloud.CmdNode, c *gin.Context) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
+	// 将新的上下文传递给需要长时间运行的操作
 	var checkRequest request.SSHRequest
-	done := make(chan int)
 	msg := make(chan cloud.MsgInfo, 100)
 	err := c.ShouldBindJSON(&checkRequest)
 	if err != nil {
@@ -56,23 +90,20 @@ func Run(cmd string, c *gin.Context) {
 			select {
 			case msg := <-msg:
 				c.SSEvent(msg.Status, msg.Msg)
-				if msg.Status == constant.FAIL {
-					done <- 1
-					return false
-				}
-
 				if msg.Status == constant.COMPLETE {
-					done <- 1
 					return false
 				}
 				return true
-			case <-time.After(2 * time.Second):
-				c.SSEvent(constant.PENDING, "pending")
+			case <-time.After(1 * time.Second):
+				c.SSEvent(constant.PENDING, "pending:"+time.Now().String())
 				return true
 			}
 		})
 	}()
 
-	cloudServiceGroup.Cmd(cmd, msg, client)
-	<-done
+	for i := range cmds {
+		cloudServiceGroup.Cmd(cmds[i], msg, client)
+	}
+
+	msg <- cloud.MsgInfo{Msg: "complete", Status: constant.COMPLETE}
 }

@@ -19,7 +19,7 @@ func (s *SSHRequest) Connection() (*ssh.Client, error) {
 			ssh.Password(s.Password),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         30 * time.Second,
+		Timeout:         30 * time.Minute,
 	}
 
 	client, err := ssh.Dial("tcp", s.Host+":"+s.Port, config)
