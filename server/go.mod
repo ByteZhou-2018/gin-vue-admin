@@ -21,6 +21,7 @@ require (
 	github.com/mojocn/base64Captcha v1.3.5
 	github.com/otiai10/copy v1.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/sftp v1.13.1
 	github.com/qiniu/api.v7/v7 v7.4.1
 	github.com/qiniu/qmgo v1.1.8
 	github.com/redis/go-redis/v9 v9.0.5
@@ -87,6 +88,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

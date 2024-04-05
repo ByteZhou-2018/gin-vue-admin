@@ -108,3 +108,63 @@ func ZipFiles(filename string, files []string, oldForm, newForm string) error {
 	}
 	return nil
 }
+
+/*
+*
+
+	zipWriter zip写入器
+	serverPath 存储的路径
+	headerName 写有zip的路径
+
+*
+*/
+func DoZip(zipWriter *zip.Writer, serverPath, headerName string) (err error) {
+	// 遍历serverPath目录并将所有非隐藏文件添加到zip归档中
+	err = filepath.Walk(serverPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// 跳过隐藏文件和目录
+		if strings.HasPrefix(info.Name(), ".") {
+			return nil
+		}
+
+		// 创建一个新的文件头
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+
+		// 将文件头的名称设置为文件的相对路径
+		rel, _ := filepath.Rel(serverPath, path)
+		header.Name = filepath.Join(headerName, rel)
+		// 目录需要拼上一个 "/" ，否则会出现一个和目录一样的文件在压缩包中
+		if info.IsDir() {
+			header.Name += "/"
+		}
+		// 将文件添加到zip归档中
+		writer, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		// 打开文件并将其内容复制到zip归档中
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(writer, file)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return err
+}

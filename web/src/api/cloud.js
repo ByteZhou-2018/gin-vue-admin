@@ -1,8 +1,15 @@
 import service from '@/utils/request'
 
-export const serverCheck = (data) => {
+export const zip = (data) => {
   return service({
-    url: '/server/check',
+    url: '/server/zip',
+    method: 'POST',
+    data
+  })
+}
+export const deploy = (data) => {
+  return service({
+    url: '/server/deploy',
     method: 'POST',
     data
   })

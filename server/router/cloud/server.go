@@ -14,5 +14,8 @@ func (e *ServerRouter) InitServerRouter(Router *gin.RouterGroup) {
 	{
 		customerRouter.POST("check", serverApi.Check)     // 检测环境
 		customerRouter.POST("install", serverApi.Install) // 安装环境
+		customerRouter.POST("zip", serverApi.Zip)         // 打包测试
+		customerRouter.POST("deploy", serverApi.Deploy)   // 上传部署
+
 	}
 }
