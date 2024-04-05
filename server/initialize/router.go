@@ -10,7 +10,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 	"os"
-	"time"
 )
 
 type justFilesFilesystem struct {
@@ -35,7 +34,7 @@ func (fs justFilesFilesystem) Open(name string) (http.File, error) {
 
 func Routers() *gin.Engine {
 	Router := gin.New()
-	Router.Use(gin.Recovery(), middleware.TimeoutMiddleware(20*time.Second))
+	Router.Use(gin.Recovery())
 	if gin.Mode() == gin.DebugMode {
 		Router.Use(gin.Logger())
 	}

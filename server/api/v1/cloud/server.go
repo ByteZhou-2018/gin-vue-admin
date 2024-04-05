@@ -44,19 +44,15 @@ func (s *ServerApi) Install(c *gin.Context) {
 	// 将新的上下文传递给需要长时间运行的操作
 	c.Request = c.Request.WithContext(ctx)
 
-	//docker := cloud.CmdNode{
-	//	Cmd:      "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh",
-	//}
-
-	//dockerCompose := cloud.CmdNode{
-	//	Cmd: "sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose && docker-compose version",
-	//}
-
-	pingTest := cloud.CmdNode{
-		Cmd: "ping www.baidu.com",
+	docker := cloud.CmdNode{
+		Cmd: "curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh",
 	}
 
-	Run([]cloud.CmdNode{pingTest}, c)
+	dockerCompose := cloud.CmdNode{
+		Cmd: "sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose && docker-compose version",
+	}
+
+	Run([]cloud.CmdNode{docker, dockerCompose}, c)
 
 }
 
@@ -94,7 +90,7 @@ func Run(cmds []cloud.CmdNode, c *gin.Context) {
 					return false
 				}
 				return true
-			case <-time.After(1 * time.Second):
+			case <-time.After(3 * time.Second):
 				c.SSEvent(constant.PENDING, "pending:"+time.Now().String())
 				return true
 			}

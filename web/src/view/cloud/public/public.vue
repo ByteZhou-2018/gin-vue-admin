@@ -45,11 +45,9 @@
 </template>
 
 <script setup>
-import { serverCheck } from '@/api/cloud'
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { useSSE } from '@/api/sse'
+import { useSSE } from '@/utils/sse'
 
 
 const publicForm = ref(null)
@@ -71,17 +69,18 @@ const install =  async () =>{
         case 'pending':
           if(cmds.value[cmds.value.length - 1]?.event !== 'pending'){
             cmds.value.push({
-              event: 'message',
-              data: ev.data
+              event: 'pending',
+              data: "正在执行命令"
             });
           }
+          cmds.value[cmds.value.length - 1].data += ".";
           break;
         case 'complete':
           cmds.value.push({
             event: 'complete',
             data: ev.data
           });
-          ElMessage.success('环境安装成功')
+          ElMessage.success('执行完成')
           break;
         case 'fail':
           cmds.value.push({
@@ -95,12 +94,6 @@ const install =  async () =>{
             data: ev.data
           });
       }
-    },
-    onclose(){
-      console.log("close")
-    },
-    onerror(err){
-      console.log(err)
     }
   })
   ctrl.value = c;
@@ -128,8 +121,7 @@ const check = async () =>{
             event: 'complete',
             data: ev.data
           });
-          Close()
-            ElMessage.success('检测成功')
+          ElMessage.success('执行完成')
           break;
         case 'fail':
           cmds.value.push({
